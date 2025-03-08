@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Breakout - Neon Space Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <header class="game-header">
+            <button class="button button--icon" id="btn-menu" aria-label="Главное меню">
+                <svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg>
+            </button>
+            
+            <div class="score-display">
+                <span class="score-display__value" id="score">0</span>
+                <div class="combo-meter">
+                    <div class="combo-meter__bar" id="combo-bar"></div>
+                    <span class="combo-meter__counter" id="combo-counter"></span>
+                </div>
+            </div>
+
+            <div class="lives">
+                <div class="lives__container" id="lives-container">❤️❤️❤️</div> <!-- Добавлены начальные жизни -->
+            </div>
+        </header>
+
+        <main class="game-main">
+            <canvas id="game-canvas" class="game-canvas"></canvas>
+            
+            <div class="overlay-effects">
+                <div class="camera-shake"></div>
+                <div class="gravitational-waves"></div>
+            </div>
+        </main>
+
+        <!-- Исправленный footer с добавленными классами -->
+        <footer class="game-footer fixed-footer">
+            <div class="audio-controls">
+                <button class="button button--sound" id="btn-sound" aria-label="Звук">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-sound-on"/></svg>
+                </button>
+                <input type="range" class="volume-slider" id="volume-slider" 
+                       min="0" max="1" step="0.1" value="1" aria-label="Громкость">
+            </div>
+            <button class="button button--pause" id="btn-pause" aria-label="Пауза">
+                <svg class="icon" aria-hidden="true"><use href="#icon-pause"/></svg>
+            </button>
+        </footer>
+
+        <!-- Модальное окно паузы с inline стилями для тестирования -->
+        <div class="modal modal--pause" id="pause-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 20px; color: white;">
+            <div class="modal__content">
+                <h2 class="modal__title">ПАУЗА</h2>
+                <div class="modal__actions">
+                    <button class="button button--resume" id="btn-resume">Продолжить</button>
+                    <button class="button button--restart" id="btn-restart">Заново</button>
+                </div>
+            </div>
+        </div>
+
+        <svg hidden>
+            <symbol id="icon-menu" viewBox="0 0 24 24">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </symbol>
+            <symbol id="icon-sound-on" viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </symbol>
+            <symbol id="icon-pause" viewBox="0 0 24 24">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </symbol>
+        </svg>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

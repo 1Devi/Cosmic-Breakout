@@ -1,0 +1,294 @@
+/* style.css */
+:root {
+    /* Цветовая схема */
+    --neon-blue: #00f3ff;
+    --neon-pink: #ff00ff;
+    --neon-purple: #6a00ff;
+    --deep-space: #0a0a20;
+    --void-black: #000018;
+    
+    /* Эффекты */
+    --glow-blue: 0 0 15px var(--neon-blue);
+    --glow-pink: 0 0 15px var(--neon-pink);
+    --gradient-space: linear-gradient(
+        45deg, 
+        var(--void-black) 0%, 
+        var(--deep-space) 100%
+    );
+}
+
+/* Базовые стили */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: var(--deep-space);
+    color: var(--neon-blue);
+    overflow: hidden;
+    height: 100vh;
+}
+
+.game-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Шапка игры */
+.game-header {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10, 10, 32, 0.8);
+    backdrop-filter: blur(5px);
+    border-bottom: 2px solid var(--neon-blue);
+    box-shadow: var(--glow-blue);
+    z-index: 100;
+}
+
+.score-display {
+    position: relative;
+	transition: text-shadow 0.3s ease;
+    font-size: 2.5rem;
+    text-shadow: var(--glow-blue);
+    animation: pulse 1.5s infinite alternate;
+}
+
+.score-display::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, 
+        rgba(0, 243, 255, 0.3), 
+        transparent 70%);
+    pointer-events: none;
+}
+
+.combo-meter {
+    position: absolute;
+    bottom: -1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.combo-meter__bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple));
+    transition: width 0.3s ease;
+}
+
+/* Основное игровое поле */
+.game-main {
+    flex: 1;
+    position: relative;
+    margin-bottom: 60px; /* Для фиксированного футера */
+}
+
+.game-canvas {
+    width: 100vw;
+    height: calc(100vw / (16/9));
+    max-height: 100vh;
+    max-width: calc(100vh * (16/9));
+    margin: 0 auto;
+    display: block;
+    image-rendering: crisp-edges;
+}
+
+/* Фиксированный футер */
+.game-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    background: rgba(10, 10, 32, 0.9);
+    backdrop-filter: blur(5px);
+    border-top: 2px solid var(--neon-blue);
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Кнопки и контролы */
+.button {
+    background: none;
+    border: 2px solid var(--neon-blue);
+    color: var(--neon-blue);
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.button:hover {
+    background: rgba(0, 243, 255, 0.1);
+    animation: glitch 0.3s infinite;
+    text-shadow: 0 0 10px var(--neon-blue);
+    box-shadow: var(--glow-blue);
+    transform: translateY(-2px);
+}
+
+.button--icon {
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+/* Модальные окна */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal__content {
+    background: var(--gradient-space);
+    border: 2px solid var(--neon-blue);
+    padding: 2rem;
+    border-radius: 1rem;
+    text-align: center;
+    min-width: 300px;
+}
+
+.modal--pause .modal__content {
+    border-color: var(--neon-pink);
+}
+
+.modal__actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    justify-content: center;
+}
+
+/* Индикатор жизней */
+.lives__container {
+    font-size: 2rem;
+    color: var(--neon-pink);
+    text-shadow: var(--glow-pink);
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Аудио контролы */
+.audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.volume-slider {
+    -webkit-appearance: none;
+    width: 120px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--neon-blue);
+    border-radius: 50%;
+    box-shadow: var(--glow-blue);
+}
+
+.block-glow {
+    box-shadow: 0 0 15px currentColor;
+    animation: pulse-glow 1.5s infinite alternate;
+}
+
+/* Анимации */
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
+
+@keyframes pulse-glow {
+    from { opacity: 0.8; }
+    to { opacity: 1; }
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-1px, 1px); }
+    40% { transform: translate(-1px, -1px); }
+    60% { transform: translate(1px, 1px); }
+    80% { transform: translate(1px, -1px); }
+    100% { transform: translate(0); }
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .score-display {
+        font-size: 1.8rem;
+    }
+    
+    .button {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .game-footer {
+        padding: 0.5rem;
+    }
+    
+    .modal__content {
+        min-width: 250px;
+        padding: 1rem;
+    }
+    
+    .lives__container {
+        font-size: 1.5rem;
+    }
+}
+
+@media (hover: none) {
+    .button:hover {
+        animation: none !important;
+        transform: none !important;
+    }
+    
+    .game-canvas {
+        touch-action: none;
+    }
+}
