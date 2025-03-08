@@ -378,16 +378,18 @@ class SoundManager {
         this.masterGain.gain.setValueAtTime(volume, this.audioContext.currentTime);
     }
 	
-    toggleMusic(state) {
-        if(state) {
-            this.musicTimers = {};
-            this.lastMusicUpdate = performance.now();
-            this.currentMusic = true;
-            this.updateMusic(performance.now());
-        } else {
-            this.currentMusic = null;
-        }
-    }
+	toggleMusic(state) {
+		if(state) {
+			if(!this.currentMusic) {
+				this.musicTimers = {};
+				this.lastMusicUpdate = performance.now();
+				this.currentMusic = true;
+				this.updateMusic(performance.now());
+			}
+		} else {
+			this.currentMusic = null;
+		}
+	}
 }
 
 class GameEngine {
@@ -523,12 +525,15 @@ class GameEngine {
         });
     }
 
-    startGame() {
-        if (!this.isRunning) {
-            this.isRunning = true;
-            this.ball.launch();
-        }
-    }
+	startGame() {
+		if (!this.isRunning) {
+			this.isRunning = true;
+			this.ball.launch();
+			if (!this.isPaused) {
+				this.soundManager.toggleMusic(true);
+			}
+		}
+	}
 
     togglePause() {
         this.isPaused = !this.isPaused;
@@ -537,7 +542,7 @@ class GameEngine {
 		this.soundManager.toggleMusic(!this.isPaused);
     }
 
-    restartGame() {
+	restartGame() {
 		this.isRunning = false;
 		this.score = 0;
 		this.lives = 3;
@@ -547,6 +552,7 @@ class GameEngine {
 		this.updateScoreDisplay();
 		this.updateLivesDisplay();
 		this.togglePause();
+		this.soundManager.toggleMusic(true);
 	}
 
     gameLoop(timestamp) {
