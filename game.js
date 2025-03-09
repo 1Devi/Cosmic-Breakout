@@ -2,7 +2,7 @@ class StarField {
     constructor(game) {
         this.game = game;
         this.layers = [];
-        this.initLayers(true); // Инициализация с полным покрытием
+        this.initLayers(); // Инициализация с полным покрытием
     }
 
 	initLayers() {
@@ -82,11 +82,6 @@ class StarField {
 		ctx.restore();
 	  });
 	}
-
-    getStarColor(layer) {
-        const colors = ['#FFFFFF', '#00F3FF', '#FF00FF'];
-        return colors[layer.speed < 0.5 ? 0 : layer.speed < 0.8 ? 1 : 2];
-    }
 }
 
 class PostProcessor {
@@ -493,12 +488,11 @@ class GameEngine {
         this.isRunning = false; // Принудительная остановка
         if (prevState.isRunning) this.startGame();
 		
-		const targetRatio = 21/9;
-		const width = Math.min(window.innerWidth, window.innerHeight * targetRatio);
-		const height = width / targetRatio;
+		const headerHeight = document.querySelector('.game-header').offsetHeight;
+		const footerHeight = document.querySelector('.game-footer').offsetHeight;
 		
-		this.canvas.width = Math.max(width, 800);
-		this.canvas.height = Math.max(height, 450);
+		this.canvas.height = window.innerHeight - headerHeight - footerHeight;
+		this.canvas.width = window.innerWidth;
 
 		// Обновляем только геометрию блоков
 		if(this.blocks) this.blocks.resize(); 
@@ -866,15 +860,31 @@ class GameEngine {
     updateScoreDisplay() {
         document.getElementById('score').textContent = 
             this.score.toString().padStart(5, '0');
+		document.querySelector('.score-display').classList.add('changed');
+		setTimeout(() => {
+			document.querySelector('.score-display').classList.remove('changed');
+		}, 300);
         document.getElementById('combo-counter').textContent = `x${this.combo}`;
         document.getElementById('combo-bar').style.width = 
             `${Math.min(this.combo * 10, 100)}%`;
     }
 
-    updateLivesDisplay() {
-        document.getElementById('lives-container').innerHTML = 
-            '❤️'.repeat(this.lives);
-    }
+	updateLivesDisplay() {
+		const container = document.getElementById('lives-container');
+		if (!container) return; // Защита от ошибок
+		
+		container.innerHTML = '';
+		
+		for (let i = 0; i < 3; i++) {
+			const heart = document.createElement('div');
+			heart.className = `heart${i < this.lives ? '' : ' lost'}`;
+			container.appendChild(heart);
+		}
+		
+		// Анимация изменения
+		container.classList.add('changed');
+		setTimeout(() => container.classList.remove('changed'), 300);
+	}
 }
 
 class Ball {
@@ -1010,6 +1020,10 @@ class Ball {
 
     update() {
         if (!this.game.isRunning) return;
+		
+		if(this.speed > 800) {
+			this.speed = 800; // Ограничение максимальной скорости
+		}
 
         // Разделение движения на 8 шагов для точности
         const steps = 8;
@@ -1394,7 +1408,8 @@ class ParticleSystem {
     }
 
     applyQualitySettings() {
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const isMobile = window.innerWidth < 768 || 
+                window.matchMedia("(pointer:coarse)").matches;
         const settings = isMobile ? this.qualitySettings.mobile : this.qualitySettings.desktop;
         
         this.BATCH_SIZE = settings.batchSize;
@@ -1493,26 +1508,6 @@ class ParticleSystem {
                 ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
                 ctx.fill();
         }
-    }
-
-    drawBasic(p, ctx, alpha) {
-        ctx.moveTo(p.pos.x + p.radius, p.pos.y);
-        ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = alpha;
-    }
-
-    drawGlow(p, ctx, alpha) {
-        const gradient = ctx.createRadialGradient(
-            p.pos.x, p.pos.y, 0,
-            p.pos.x, p.pos.y, p.radius * 2
-        );
-        gradient.addColorStop(0, `${p.color}${Math.floor(alpha * 255).toString(16)}`);
-        gradient.addColorStop(1, `${p.color}00`);
-        
-        ctx.fillStyle = gradient;
-        ctx.moveTo(p.pos.x + p.radius * 2, p.pos.y);
-        ctx.arc(p.pos.x, p.pos.y, p.radius * 2, 0, Math.PI * 2);
     }
 
     drawBlockFragment(p, ctx, alpha) {

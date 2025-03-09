@@ -8,23 +8,21 @@
 </head>
 <body>
     <div class="game-wrapper">
-        <header class="game-header">
-            <button class="button button--icon" id="btn-menu" aria-label="Main Menu">
-                <svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg>
-            </button>
-            
-            <div class="score-display">
-                <span class="score-display__value" id="score">0</span>
-                <div class="combo-meter">
-                    <div class="combo-meter__bar" id="combo-bar"></div>
-                    <span class="combo-meter__counter" id="combo-counter"></span>
-                </div>
-            </div>
+        <!-- Обновленный хедер -->
+		<header class="game-header">
+			<div class="info-container">
+				<div class="info-panel score-display">
+					<span id="score">00000</span>
+				</div>
+				<div class="info-panel lives__container" id="lives-container">
+					<div class="heart"></div>
+					<div class="heart"></div>
+					<div class="heart"></div>
+				</div>
 
-            <div class="lives">
-                <div class="lives__container" id="lives-container">❤️❤️❤️</div> <!-- Добавлены начальные жизни -->
-            </div>
-        </header>
+			</div>
+		</header>
+
 
         <main class="game-main">
             <canvas id="game-canvas" class="game-canvas"></canvas>
@@ -35,30 +33,37 @@
             </div>
         </main>
 
-        <!-- Исправленный footer с добавленными классами -->
-        <footer class="game-footer fixed-footer">
-            <div class="audio-controls">
-                <button class="button button--sound" id="btn-sound" aria-label="Sound">
-                    <svg class="icon" aria-hidden="true"><use href="#icon-sound-on"/></svg>
-                </button>
-                <input type="range" class="volume-slider" id="music-slider" min="0" max="1" step="0.1" value="1">
-				<input type="range" class="volume-slider" id="sfx-slider" min="0" max="1" step="0.1" value="1">
-            </div>
-            <button class="button button--pause" id="btn-pause" aria-label="Pause">
-                <svg class="icon" aria-hidden="true"><use href="#icon-pause"/></svg>
-            </button>
-        </footer>
+		<!-- Обновленный футер -->
+		<footer class="game-footer">
+			<div class="combo-meter">
+				<div class="combo-meter__bar" id="combo-bar"></div>
+				<span class="combo-meter__counter" id="combo-counter">x1</span>
+			</div>
+			<button class="button button--pause" id="btn-pause" aria-label="Pause">
+				<svg class="icon" aria-hidden="true"><use href="#icon-pause"/></svg>
+			</button>
+		</footer>
 
-        <!-- Модальное окно паузы с inline стилями для тестирования -->
-        <div class="modal modal--pause" id="pause-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 20px; color: white;">
-            <div class="modal__content">
-                <h2 class="modal__title">PAUSE</h2>
-                <div class="modal__actions">
-                    <button class="button button--resume" id="btn-resume">Continue</button>
-                    <button class="button button--restart" id="btn-restart">Restart</button>
-                </div>
-            </div>
-        </div>
+		<!-- Модальное окно паузы с настройками звука -->
+		<div class="modal modal--pause" id="pause-modal">
+			<div class="modal__content">
+				<h2 class="modal__title">PAUSE</h2>
+				<div class="audio-controls">
+					<div class="volume-control">
+						<label>Music</label>
+						<input type="range" class="volume-slider" id="music-slider" min="0" max="1" step="0.1" value="1">
+					</div>
+					<div class="volume-control">
+						<label>SFX</label>
+						<input type="range" class="volume-slider" id="sfx-slider" min="0" max="1" step="0.1" value="1">
+					</div>
+				</div>
+				<div class="modal__actions">
+					<button class="button button--resume" id="btn-resume">Continue</button>
+					<button class="button button--restart" id="btn-restart">Restart</button>
+				</div>
+			</div>
+		</div>
 		
 		<!-- Модальное окно победы -->
 		<div class="modal modal--victory" id="victory-modal" style="display: none">
