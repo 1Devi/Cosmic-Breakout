@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmic Breakout - Neon Space Edition</title>
+    <title>Cosmic Breakout</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-wrapper">
         <header class="game-header">
-            <button class="button button--icon" id="btn-menu" aria-label="Главное меню">
+            <button class="button button--icon" id="btn-menu" aria-label="Main Menu">
                 <svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg>
             </button>
             
@@ -38,13 +38,13 @@
         <!-- Исправленный footer с добавленными классами -->
         <footer class="game-footer fixed-footer">
             <div class="audio-controls">
-                <button class="button button--sound" id="btn-sound" aria-label="Звук">
+                <button class="button button--sound" id="btn-sound" aria-label="Sound">
                     <svg class="icon" aria-hidden="true"><use href="#icon-sound-on"/></svg>
                 </button>
                 <input type="range" class="volume-slider" id="music-slider" min="0" max="1" step="0.1" value="1">
 				<input type="range" class="volume-slider" id="sfx-slider" min="0" max="1" step="0.1" value="1">
             </div>
-            <button class="button button--pause" id="btn-pause" aria-label="Пауза">
+            <button class="button button--pause" id="btn-pause" aria-label="Pause">
                 <svg class="icon" aria-hidden="true"><use href="#icon-pause"/></svg>
             </button>
         </footer>
@@ -52,13 +52,35 @@
         <!-- Модальное окно паузы с inline стилями для тестирования -->
         <div class="modal modal--pause" id="pause-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 20px; color: white;">
             <div class="modal__content">
-                <h2 class="modal__title">ПАУЗА</h2>
+                <h2 class="modal__title">PAUSE</h2>
                 <div class="modal__actions">
-                    <button class="button button--resume" id="btn-resume">Продолжить</button>
-                    <button class="button button--restart" id="btn-restart">Заново</button>
+                    <button class="button button--resume" id="btn-resume">Continue</button>
+                    <button class="button button--restart" id="btn-restart">Restart</button>
                 </div>
             </div>
         </div>
+		
+		<!-- Модальное окно победы -->
+		<div class="modal modal--victory" id="victory-modal" style="display: none">
+			<div class="modal__content">
+				<h2 class="modal__title">VICTORY</h2>
+				<div class="modal__text">Your score: <span id="victory-score">0</span></div>
+				<div class="modal__actions">
+					<button class="button button--restart" id="btn-victory-restart">Restart</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Модальное окно поражения -->
+		<div class="modal modal--gameover" id="gameover-modal" style="display: none">
+			<div class="modal__content">
+				<h2 class="modal__title">GAME OVER</h2>
+				<div class="modal__text">Best score: <span id="best-score">0</span></div>
+				<div class="modal__actions">
+					<button class="button button--restart" id="btn-gameover-restart">Restart</button>
+				</div>
+			</div>
+		</div>
 
         <svg hidden>
             <symbol id="icon-menu" viewBox="0 0 24 24">

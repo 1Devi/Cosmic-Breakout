@@ -96,17 +96,16 @@ body {
 .game-main {
     flex: 1;
     position: relative;
-    margin-bottom: 60px; /* Для фиксированного футера */
+    padding-bottom: 80px;
 }
 
 .game-canvas {
-    width: 100vw;
-    height: calc(100vw / (16/9));
-    max-height: 100vh;
-    max-width: calc(100vh * (16/9));
-    margin: 0 auto;
-    display: block;
-    image-rendering: crisp-edges;
+    width: 100%;
+    height: calc(100vh - 160px);
+    max-width: none;
+    max-height: none;
+    aspect-ratio: 21/9;
+    object-fit: contain;
 }
 
 /* Фиксированный футер */
@@ -172,6 +171,36 @@ body {
     z-index: 1000;
 }
 
+.modal {
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: scale(0.8);
+}
+
+.modal.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.modal--victory .modal__content {
+    border-color: #00ff88;
+    background: linear-gradient(45deg, #001a12, #003d2b);
+}
+
+.modal--gameover .modal__content {
+    border-color: #ff0033;
+    background: linear-gradient(45deg, #1a0000, #3d0000);
+}
+
+.modal__text {
+    margin: 1rem 0;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
 .modal__content {
     background: var(--gradient-space);
     border: 2px solid var(--neon-blue);
@@ -231,6 +260,12 @@ body {
 }
 
 /* Анимации */
+
+@keyframes modalEntry {
+    0% { transform: translateY(-20px) scale(0.95); }
+    100% { transform: translateY(0) scale(1); }
+}
+
 @keyframes pulse {
     from { transform: scale(1); }
     to { transform: scale(1.05); }

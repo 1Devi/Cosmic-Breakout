@@ -464,7 +464,16 @@ class GameEngine {
         document.getElementById('btn-pause').addEventListener('click', () => this.togglePause());
         document.getElementById('btn-resume').addEventListener('click', () => this.togglePause());
         document.getElementById('btn-restart').addEventListener('click', () => this.restartGame());
-    }
+		document.getElementById('btn-victory-restart').addEventListener('click', () => {
+			this.restartGame();
+			this.toggleModal('victory-modal', false);
+		});
+		
+		document.getElementById('btn-gameover-restart').addEventListener('click', () => {
+			this.restartGame();
+			this.toggleModal('gameover-modal', false);
+		});
+	}
 
 	resize() {
         const prevState = {
@@ -484,7 +493,7 @@ class GameEngine {
         this.isRunning = false; // Принудительная остановка
         if (prevState.isRunning) this.startGame();
 		
-		const targetRatio = 16/9;
+		const targetRatio = 21/9;
 		const width = Math.min(window.innerWidth, window.innerHeight * targetRatio);
 		const height = width / targetRatio;
 		
@@ -539,31 +548,54 @@ class GameEngine {
 	startGame() {
 		if (!this.isRunning) {
 			this.isRunning = true;
+			this.isPaused = false;
 			this.ball.launch();
-			if (!this.isPaused) {
-				this.soundManager.toggleMusic(true);
-			}
+			this.soundManager.toggleMusic(true);
 		}
 	}
 
-    togglePause() {
-        this.isPaused = !this.isPaused;
-        document.getElementById('pause-modal').style.display = 
-            this.isPaused ? 'flex' : 'none';
+	togglePause() {
+		this.isPaused = !this.isPaused;
+		const pauseModal = document.getElementById('pause-modal');
+		
+		// Добавляем/удаляем класс вместо прямого изменения стиля
+		pauseModal.classList.toggle('active', this.isPaused);
+		
+		// Всегда показываем модалку перед анимацией
+		if(this.isPaused) {
+			pauseModal.style.display = 'flex';
+			setTimeout(() => pauseModal.classList.add('active'), 10);
+		} else {
+			pauseModal.classList.remove('active');
+			setTimeout(() => pauseModal.style.display = 'none', 300);
+		}
+		
 		this.soundManager.toggleMusic(!this.isPaused);
-    }
+	}
 
 	restartGame() {
+		// Полный сброс состояния
 		this.isRunning = false;
+		this.isPaused = false;
 		this.score = 0;
 		this.lives = 3;
 		this.combo = 1;
+		
+		// Сброс игровых объектов
 		this.blocks.generateLevel(false);
 		this.ball.reset();
+		this.paddle.reset();
+		this.soundManager.toggleMusic(false);
+		
+		// Обновление интерфейса
 		this.updateScoreDisplay();
 		this.updateLivesDisplay();
-		this.togglePause();
-		this.soundManager.toggleMusic(true);
+		
+		// Закрытие всех модалок
+		document.querySelectorAll('.modal').forEach(modal => {
+			modal.classList.remove('active');
+			modal.style.display = 'none';
+		});
 	}
 
     gameLoop(timestamp) {
@@ -796,10 +828,12 @@ class GameEngine {
 	}
 
     showVictory() {
-		this.soundManager.play('victory');
+		this.soundManager.toggleMusic(false);
+        this.soundManager.play('victory');
         this.isRunning = false;
-        alert('Level Completed!');
-        this.restartGame();
+        document.getElementById('victory-score').textContent = this.score;
+        this.toggleModal('victory-modal', true);
+        this.saveBestScore();
     }
 
     loseLife() {
@@ -810,10 +844,23 @@ class GameEngine {
         this.combo = 1;
 
         if (this.lives <= 0) {
-            setTimeout(() => alert('Game Over!'), 100);
-            this.restartGame();
+			this.soundManager.toggleMusic(false);
+            this.toggleModal('gameover-modal', true);
+            this.saveBestScore();
         }
-		this.soundManager.play('lose-life');
+        this.soundManager.play('lose-life');
+    }
+
+	toggleModal(modalId, show) {
+        const modal = document.getElementById(modalId);
+        modal.style.display = show ? 'flex' : 'none';
+        modal.classList.toggle('active', show);
+    }
+	
+    saveBestScore() {
+        const best = Math.max(this.score, localStorage.getItem('bestScore') || 0);
+        localStorage.setItem('bestScore', best);
+        document.getElementById('best-score').textContent = best;
     }
 
     updateScoreDisplay() {
