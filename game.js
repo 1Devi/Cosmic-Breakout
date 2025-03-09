@@ -205,6 +205,12 @@ class SoundManager {
         this.initBaseSounds();
         this.initMusicGenerator();
 		this.musicTimers = {};
+		document.getElementById('music-slider').addEventListener('input', e => {
+            this.setMusicVolume(e.target.value);
+        });
+        document.getElementById('sfx-slider').addEventListener('input', e => {
+            this.setSFXVolume(e.target.value);
+        });
     }
 
 	initBaseSounds() {
@@ -214,6 +220,14 @@ class SoundManager {
 		this.addSound('wall-hit', this.createWallHitSound());
 		this.addSound('victory', this.createVictorySound());
 	}
+
+	setSFXVolume(volume) {
+        this.sfxGain.gain.setValueAtTime(volume, this.audioContext.currentTime);
+    }
+
+    setMusicVolume(volume) {
+        this.musicGain.gain.setValueAtTime(volume, this.audioContext.currentTime);
+    }
 
 	createLoseLifeSound() {
 		return () => {
@@ -450,9 +464,6 @@ class GameEngine {
         document.getElementById('btn-pause').addEventListener('click', () => this.togglePause());
         document.getElementById('btn-resume').addEventListener('click', () => this.togglePause());
         document.getElementById('btn-restart').addEventListener('click', () => this.restartGame());
-        document.getElementById('volume-slider').addEventListener('input', e => {
-            if (this.soundManager) this.soundManager.setVolume(e.target.value);
-        });
     }
 
 	resize() {
@@ -586,6 +597,10 @@ class GameEngine {
         
         if (this.particles) {
             this.particles.update(dt);
+
+			if (document.visibilityState === 'visible') {
+				this.particles.render();
+			}
         }
         
         this.checkCollisions();
@@ -702,28 +717,35 @@ class GameEngine {
 	}
 
 	handlePaddleCollision(collisionData) {
-	  const paddleCenter = this.paddle.pos.x + this.paddle.width/2;
-	  const hitOffset = (this.ball.pos.x - paddleCenter) / (this.paddle.width/2);
-	  
-	  // Новый расчёт угла с учётом зоны удара
-	  const maxAngle = Math.PI/3;
-	  const angle = hitOffset * maxAngle;
-	  
-	  // Увеличение скорости
-	  this.ball.speed *= 1.02;
-	  this.ball.speed = Math.min(this.ball.speed, 800); // Максимум 800px/s
-	  
-	  // Обновление скорости без нормализации
-	  this.ball.vel.x = Math.sin(angle) * this.ball.speed;
-	  this.ball.vel.y = -Math.cos(angle) * this.ball.speed;
+		const paddleCenter = this.paddle.pos.x + this.paddle.width/2;
+		const hitOffset = (this.ball.pos.x - paddleCenter) / (this.paddle.width/2);
 
-	  // Эффекты
-	  this.camera.shake = 5 * Math.abs(hitOffset);
-	  this.particles.emit(
-		this.ball.pos.x,
-		this.ball.pos.y,
-		{count: 20, speed: 300, size: 3, color: '#00f3ff'}
-	  );
+		// Новый расчёт угла с учётом зоны удара
+		const maxAngle = Math.PI/3;
+		const angle = hitOffset * maxAngle;
+
+		// Увеличение скорости
+		this.ball.speed *= 1.02;
+		this.ball.speed = Math.min(this.ball.speed, 800); // Максимум 800px/s
+
+		// Обновление скорости без нормализации
+		this.ball.vel.x = Math.sin(angle) * this.ball.speed;
+		this.ball.vel.y = -Math.cos(angle) * this.ball.speed;
+
+		// Эффекты
+		this.camera.shake = 5 * Math.abs(hitOffset);
+		this.particles.emit(
+		  this.ball.pos.x,
+		  this.ball.pos.y,
+		  {
+			type: 'paddleHit', // Добавляем явный тип
+			count: 20,
+			speed: 150, // Уменьшаем скорость
+			size: 3,
+			lifetime: 0.8,
+			color: '#00f3ff' // Фиксированный цвет
+		  }
+		);
 	  
 	  this.soundManager.play('hit', this.ball.speed);
 	}
@@ -1251,184 +1273,206 @@ class BlockManager {
 }
 
 class Particle {
-    constructor(game, x, y, config) {
+    constructor(game) {
         this.game = game;
-        this.pos = { x, y };
-        this.vel = {
-            x: (Math.random() - 0.5) * config.speed,
-            y: (Math.random() - 0.5) * config.speed
-        };
+        this.pos = { x: 0, y: 0 };
+        this.vel = { x: 0, y: 0 };
+        this.radius = 0;
+        this.life = 0;
+        this.maxLife = 0;
+        this.color = '#FFFFFF';
+        this.type = 'circle';
+        this.active = false;
+    }
+
+    reset(x, y, config) {
+        this.pos.x = x;
+        this.pos.y = y;
+        this.vel.x = (Math.random() - 0.5) * config.speed;
+        this.vel.y = (Math.random() - 0.5) * config.speed;
         this.radius = config.size * (0.5 + Math.random() * 0.5);
         this.life = config.lifetime;
-        this.maxLife = this.life;
+        this.maxLife = config.lifetime;
         this.color = config.color;
         this.type = config.type || 'circle';
+        this.active = true;
     }
 
     update(dt) {
+        if (!this.active) return;
+
+        // Обновляем физику для всех частиц одинаково
         this.life -= dt;
-		// Плавное изменение размера
-		this.radius *= 0.98; 
+        this.vel.y += 800 * dt; // Гравитация
         this.pos.x += this.vel.x * dt;
         this.pos.y += this.vel.y * dt;
-        this.vel.y += 800 * dt; // Гравитация
+        this.radius *= 0.98;
+
+        // Деактивация при выходе за границы
+        if (this.pos.y > this.game.canvas.height + 100) {
+            this.active = false;
+        }
     }
-
-	draw(ctx) {
-		const alpha = Math.pow(this.life / this.maxLife, 2);
-        ctx.globalAlpha = alpha * 0.8;
-		ctx.save();
-
-		if (this.type === 'trail') {
-			const gradient = ctx.createRadialGradient(
-				this.pos.x, this.pos.y, 0,
-				this.pos.x, this.pos.y, this.radius
-			);
-			gradient.addColorStop(0, this.color);
-			gradient.addColorStop(1, 'transparent');
-
-			ctx.fillStyle = gradient;
-			ctx.fillRect(
-				this.pos.x - this.radius,
-				this.pos.y - this.radius,
-				this.radius * 2,
-				this.radius * 2
-			);
-		} else {
-			ctx.fillStyle = this.color;
-			ctx.beginPath();
-			ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
-			ctx.fill();
-		}
-
-		ctx.restore();
-	}
-
 }
 
 class ParticleSystem {
     constructor(game) {
         this.game = game;
+        this.poolSize = 2000;
         this.particles = [];
         this.pool = [];
-		this.maxParticles = 1000; // Добавить ограничение
-		this.types = {
-            'basic': this.renderBasic,
-            'glow': this.renderGlowParticle,
-            'spark': this.renderSpark,
-            'blockFragment': this.renderBlockFragment
+        this.BATCH_SIZE = 100;
+
+        // Настройки качества
+        this.qualitySettings = {
+            mobile: {
+                maxParticles: 500,
+                batchSize: 50
+            },
+            desktop: {
+                maxParticles: 2000,
+                batchSize: 100
+            }
         };
+
+        // Инициализация пула
+        this.initPool();
+        this.applyQualitySettings();
+    }
+
+    initPool() {
+        for (let i = 0; i < this.poolSize; i++) {
+            this.pool.push(new Particle(this.game));
+        }
+    }
+
+    applyQualitySettings() {
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const settings = isMobile ? this.qualitySettings.mobile : this.qualitySettings.desktop;
+        
+        this.BATCH_SIZE = settings.batchSize;
+        this.poolSize = settings.maxParticles;
     }
 
     emit(x, y, config) {
-        if (this.particles.length + config.count > this.maxParticles) {
-            // Удаляем самые старые частицы при превышении лимита
-            const toRemove = this.particles.splice(0, config.count);
-            this.pool.push(...toRemove);
-        }
-		
-		const canEmit = this.particles.length + config.count <= this.maxParticles;
-		if (!canEmit) return;
-
-		for (let i = 0; i < config.count; i++) {
-			let particle = this.pool.pop();
-			if (!particle) particle = new Particle(this.game, x, y, config);
-			else {
-				particle.pos.x = x;
-				particle.pos.y = y;
-				particle.life = config.lifetime;
-				particle.maxLife = config.lifetime;
-				particle.vel.x = (Math.random() - 0.5) * config.speed;
-				particle.vel.y = (Math.random() - 0.5) * config.speed;
-				particle.radius = config.size * (0.5 + Math.random() * 0.5);
-				particle.color = config.color; // Use the passed color
-			}
-			this.particles.push(particle);
-		}
-	}
-
-
-    update(dt) {
-        for(let i = this.particles.length - 1; i >= 0; i--) {
-            this.particles[i].update(dt);
-            if(this.particles[i].life <= 0) {
-                this.pool.push(this.particles.splice(i, 1)[0]);
+        const needed = Math.min(config.count, this.pool.length);
+        
+        for (let i = 0; i < needed; i++) {
+            const particle = this.pool.pop();
+            if (particle) {
+                particle.reset(x, y, config);
+                this.particles.push(particle);
             }
         }
     }
 
-    renderBasic(p) {
+	update(dt) {
+	  let i = this.particles.length;
+	  while (i--) {
+		const p = this.particles[i];
+		
+		// Добавляем проверку границ
+		if (p.pos.y > this.game.canvas.height + 100) {
+		  p.active = false;
+		}
+		
+		p.update(dt);
+		if (!p.active) {
+		  this.pool.push(this.particles.splice(i, 1)[0]);
+		}
+	  }
+	}
+
+    render() {
         const ctx = this.game.ctx;
+        let count = 0;
+        
         ctx.save();
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.life / p.maxLife;
         ctx.beginPath();
-        ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
+        
+        this.particles.forEach((p, i) => {
+            if (!p.active) return;
+
+            // Батчинг по типам и цветам
+            if (count === 0 || 
+                (i % this.BATCH_SIZE === 0 && count > 0)) {
+                ctx.fill();
+                ctx.beginPath();
+                count = 0;
+            }
+
+            this.drawParticle(p, ctx);
+            count++;
+        });
+
         ctx.fill();
         ctx.restore();
     }
 
-	render() {
-        this.particles.forEach(p => {
-            const renderMethod = this.types[p.type] || this.renderBasic;
-            renderMethod.call(this, p);
-        });
-    }
-	
-    renderBlockFragment(p) {
-        const ctx = this.game.ctx;
-        ctx.save();
+    drawParticle(p, ctx) {
+        const alpha = Math.pow(p.life / p.maxLife, 2);
         
-        // Градиентный эффект
+        // Возвращаем стили из первого файла для blockFragment
+        switch(p.type) {
+            case 'blockFragment':
+                ctx.save();
+                const gradient = ctx.createRadialGradient(
+                    p.pos.x, p.pos.y, 0,
+                    p.pos.x, p.pos.y, p.radius * 2
+                );
+                gradient.addColorStop(0, `${p.color}ff`);
+                gradient.addColorStop(1, `${p.color}00`);
+                
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(p.pos.x, p.pos.y, p.radius * 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                break;
+
+            case 'paddleHit':
+                ctx.fillStyle = '#00f3ff';
+                ctx.globalAlpha = alpha * 0.8;
+                ctx.beginPath();
+                ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+
+            default:
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+        }
+    }
+
+    drawBasic(p, ctx, alpha) {
+        ctx.moveTo(p.pos.x + p.radius, p.pos.y);
+        ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = alpha;
+    }
+
+    drawGlow(p, ctx, alpha) {
         const gradient = ctx.createRadialGradient(
             p.pos.x, p.pos.y, 0,
             p.pos.x, p.pos.y, p.radius * 2
         );
-        gradient.addColorStop(0, `${p.color}ff`);
+        gradient.addColorStop(0, `${p.color}${Math.floor(alpha * 255).toString(16)}`);
         gradient.addColorStop(1, `${p.color}00`);
         
-        ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = gradient;
-        ctx.beginPath();
+        ctx.moveTo(p.pos.x + p.radius * 2, p.pos.y);
         ctx.arc(p.pos.x, p.pos.y, p.radius * 2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
     }
-	
-    renderGlowParticle(p) {
-        const ctx = this.game.ctx;
-        const gradient = ctx.createRadialGradient(
-            p.pos.x, p.pos.y, 0,
-            p.pos.x, p.pos.y, p.radius * 2
-        );
-        
-        gradient.addColorStop(0, `${p.color}ff`);
-        gradient.addColorStop(1, `${p.color}00`);
-        
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p.pos.x, p.pos.y, p.radius * 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-	
-    renderSpark(p) {
-        const ctx = this.game.ctx;
-        ctx.save();
-        ctx.translate(p.pos.x, p.pos.y);
-        ctx.rotate(Math.atan2(p.vel.y, p.vel.x));
-        
-        const gradient = ctx.createLinearGradient(-10, 0, 10, 0);
-        gradient.addColorStop(0, `${p.color}00`);
-        gradient.addColorStop(0.5, `${p.color}ff`);
-        gradient.addColorStop(1, `${p.color}00`);
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(-10, -2, 20, 4);
-        ctx.restore();
+
+    drawBlockFragment(p, ctx, alpha) {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = alpha * 0.7;
+        ctx.moveTo(p.pos.x + p.radius, p.pos.y);
+        ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
     }
 }
 
